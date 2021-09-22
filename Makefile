@@ -13,6 +13,16 @@ all: proxy
 csapp.o: csapp.c csapp.h
 	$(CC) $(CFLAGS) -c csapp.c
 
+echoserver.o: echoserveri.c csapp.h
+	$(CC) $(CFLAGS) -c echoserveri.c
+
+echoserver: echoserveri.o csapp.o
+	$(CC) $(CFLAGS) echoserveri.o csapp.o -o echoserver $(LDFLAGS)
+
+echoclient: client.o csapp.o
+	$(CC) $(CFLAGS) client.o csapp.o -o client $(LDFLAGS)
+
+
 proxy.o: proxy.c csapp.h
 	$(CC) $(CFLAGS) -c proxy.c
 
