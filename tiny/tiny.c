@@ -1,11 +1,3 @@
-/* $begin tinymain */
-/*
- * tiny.c - A simple, iterative HTTP/1.0 Web server that uses the
- *     GET method to serve static and dynamic content.
- *
- * Updated 11/2019 droh
- *   - Fixed sprintf() aliasing issue in serve_static(), and clienterror().
- */
 #include "csapp.h"
 
 void doit(int fd);
@@ -50,7 +42,7 @@ void doit(int fd)
   int is_static;
   struct stat sbuf;
   char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
-  char filename[MAXLINE], cgiargs[MAXLINE];
+  char filename[MAXLINE], cgiargs[MAXLINE], filetype[MAXLINE];
   rio_t rio;
   /* Read request line and headers */
   Rio_readinitb(&rio, fd);
@@ -58,21 +50,36 @@ void doit(int fd)
   printf("Request headers:\n");
   printf("%s", buf);
   sscanf(buf, "%s %s %s", method, uri, version);
-  if (strcasecmp(method, "GET"))
+  if (strcasecmp(method, "GET") && strcasecmp(method, "HEAD"))
   {
     clienterror(fd, method, "501", "Not implemented",
                 "Tiny does not implement this method");
     return;
   }
   read_requesthdrs(&rio);
-  /* Parse URI from GET request */
   is_static = parse_uri(uri, filename, cgiargs);
+  
+  /* Parse URI from GET request */
   if (stat(filename, &sbuf) < 0)
   {
     clienterror(fd, filename, "404", "Not found",
                 "Tiny couldn’t find this file");
     return;
   }
+  /* Parse URI from HEAD request */
+  if (!strcasecmp(method, "HEAD"))
+  {
+    printf("check");
+    get_filetype(filename, filetype);
+    sprintf(buf, "HTTP/1.0 200 OK\r\n");
+    sprintf(buf, "%sServer: Tiny Web Server\r\n", buf);
+    sprintf(buf, "%sConnection: close\r\n", buf);
+    sprintf(buf, "%sContent-length: %d\r\n", buf, sbuf.st_size);
+    sprintf(buf, "%sContent-type: %s\r\n\r\n", buf, filetype);
+    Rio_writen(fd, buf, strlen(buf));
+    return;
+  }
+  /* Parse URI from GET request */
   if (is_static)
   { /* Serve static content */
     if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode))
