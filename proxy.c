@@ -57,10 +57,6 @@ int main(int argc, char **argv)
 
     while (1) {
     	clientlen = sizeof(clientaddr);
-    	// connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
-    	// proxy(connfd);
-    	// Close(connfd);
-
       
 
         connfdp = Malloc(sizeof(int));
@@ -113,7 +109,7 @@ void doit(int cliendfd)
         fprintf(stderr, "HTTP request error.");
         return;
     }
-  // normal method check
+  // 서버에 저장된 method만 요구했는지 check
     if (strcasecmp(method, "GET") != 0) {
         clienterror(cliendfd, method, "501", "Not Implemented",
                 "Proxy only supports GET method");
@@ -196,7 +192,7 @@ int parse_uri(char *uri, char *host, char *file)
 {
     int port;
     char buf[MAXLINE];
-
+/*sscanf는 [ ]대괄호 안에 값을 넣어 읽을 문자열을 선택적으로 문자열에 저장하는 기능도 제공한다.*/
     sscanf(uri, "%*[^:]://%[^/]%s", host, file);
     if (strstr(host, ":")) {
         strcpy(buf, host);
