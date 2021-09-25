@@ -23,7 +23,7 @@ static const char *connection = "Cnnection: close\r\n";
 static const char *proxy_connection = "Proxy-connection: close\r\n";
 
 void *proxy_thread(void *vargp);
-void proxy(int cliendfd);
+void doit(int cliendfd);
 // void write_requesthdrs(rio_t *rp, char *newreq);
 void write_requesthdrs(char *newreq, char *host);
 int parse_uri(char *uri, char *host, char *file);
@@ -61,6 +61,8 @@ int main(int argc, char **argv)
     	// proxy(connfd);
     	// Close(connfd);
 
+      
+
         connfdp = Malloc(sizeof(int));
         *connfdp = Accept(listenfd, (SA *)&clientaddr, &clientlen);
         Pthread_create(&pid, NULL, proxy_thread, connfdp);
@@ -79,7 +81,7 @@ void *proxy_thread(void *vargp) {
     int connfd = *((int *)vargp);
     Pthread_detach(pthread_self());
     Free(vargp);
-    proxy(connfd);
+    doit(connfd);
     Close(connfd);
     return NULL;
 }
@@ -91,7 +93,7 @@ void *proxy_thread(void *vargp) {
  * 2. Forward the request and header information to the server
  * 3. Get response from server and forward it back to client
  */
-void proxy(int cliendfd)
+void doit(int cliendfd)
 {
 	int hostport, serverfd;
 	char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
@@ -100,6 +102,7 @@ void proxy(int cliendfd)
     size_t n;
 
 	/* get request for client */
+  // read ready -> read -> sscanf set method uri version(header)
     rio_readinitb(&client_rio, cliendfd);
     if (rio_readlineb(&client_rio, buf, MAXLINE) < 0) {
         fprintf(stderr, "Error reading from client.");
@@ -110,7 +113,7 @@ void proxy(int cliendfd)
         fprintf(stderr, "HTTP request error.");
         return;
     }
-
+  // normal method check
     if (strcasecmp(method, "GET") != 0) {
         clienterror(cliendfd, method, "501", "Not Implemented",
                 "Proxy only supports GET method");
